@@ -40,6 +40,9 @@ export default function AdminLayout({
                     <Link href="/admin/templates" className="block p-3 rounded hover:bg-white/10 transition">
                         KB Templates
                     </Link>
+                    <Link href="/admin/formatter" className="block p-3 rounded hover:bg-white/10 transition">
+                        KB Formatter
+                    </Link>
                     <div className="h-px bg-white/20 my-4"></div>
                     <Link href="/" className="block p-3 rounded hover:bg-white/10 transition text-sm opacity-80">
                         &larr; Back to Chat

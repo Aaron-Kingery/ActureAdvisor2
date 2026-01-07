@@ -133,4 +133,42 @@ Context:
             return response.content
         return str(response)
 
+    async def format_article(self, raw_text: str, template_content: str) -> str:
+        """
+        Formats raw text into a KB article using the provided template.
+        """
+        system_prompt = f"""You are an expert technical writer for Acture Solutions.
+Your goal is to rewrite the input text to match the structure and style of the provided Template.
+
+Template Rules:
+{template_content}
+
+Instructions:
+1. Reorganize the information to fit the template headers and sections.
+2. Improve clarity, grammar, and professional tone.
+3. Fix formatting (lists, code blocks, etc.).
+4. Do NOT make up information that isn't in the source text.
+5. Return ONLY the formatted Markdown content.
+"""
+        user_prompt = f"Raw Text:\n{raw_text}"
+        
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_prompt),
+        ]
+        
+        # Prefer OpenAI for formatting quality
+        if self.openai_llm:
+            try:
+                response = await self.openai_llm.ainvoke(messages)
+                return response.content
+            except Exception as e:
+                print(f"OpenAI failed ({e}), falling back to Ollama...")
+        
+        # Fallback
+        response = await self.ollama_llm.ainvoke(messages)
+        if hasattr(response, 'content'):
+            return response.content
+        return str(response)
+
 rag_service = RAGService()

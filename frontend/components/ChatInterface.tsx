@@ -15,6 +15,7 @@ interface Message {
     role: "user" | "assistant";
     content: string;
     sources?: Source[];
+    feedback?: "positive" | "negative";
 }
 
 export default function ChatInterface() {
@@ -49,6 +50,27 @@ export default function ChatInterface() {
         };
         fetchStats();
     }, []);
+
+    const handleFeedback = async (messageId: string, type: "positive" | "negative") => {
+        // Optimistic UI update
+        setMessages((prev) =>
+            prev.map((msg) =>
+                msg.id === messageId ? { ...msg, feedback: type } : msg
+            )
+        );
+
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+            await fetch(`${apiUrl}/chat/${messageId}/feedback`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ feedback_type: type }),
+            });
+        } catch (error) {
+            console.error("Failed to submit feedback:", error);
+            // Revert on error? For now, just log.
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -168,11 +190,27 @@ export default function ChatInterface() {
                                     {/* Feedback Actions (Assistant only) */}
                                     {msg.role === "assistant" && (
                                         <div className="mt-2 flex items-center justify-end gap-2 text-gray-400">
-                                            <button className="p-1 hover:text-green-500 transition-colors" title="Helpful">
-                                                <ThumbsUp size={14} />
+                                            <button
+                                                onClick={() => handleFeedback(msg.id, "positive")}
+                                                className={clsx(
+                                                    "p-1 transition-colors",
+                                                    msg.feedback === "positive" ? "text-green-500" : "hover:text-green-500"
+                                                )}
+                                                title="Helpful"
+                                                disabled={!!msg.feedback}
+                                            >
+                                                <ThumbsUp size={14} className={clsx(msg.feedback === "positive" && "fill-current")} />
                                             </button>
-                                            <button className="p-1 hover:text-red-500 transition-colors" title="Not Helpful">
-                                                <ThumbsDown size={14} />
+                                            <button
+                                                onClick={() => handleFeedback(msg.id, "negative")}
+                                                className={clsx(
+                                                    "p-1 transition-colors",
+                                                    msg.feedback === "negative" ? "text-red-500" : "hover:text-red-500"
+                                                )}
+                                                title="Not Helpful"
+                                                disabled={!!msg.feedback}
+                                            >
+                                                <ThumbsDown size={14} className={clsx(msg.feedback === "negative" && "fill-current")} />
                                             </button>
                                         </div>
                                     )}

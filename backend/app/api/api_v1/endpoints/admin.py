@@ -4,6 +4,7 @@ from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
 from app.models import User, Feedback, Query, Document, KBTemplate, Role, FeedbackStatus
+from app.services.rag_service import rag_service
 from pydantic import BaseModel
 from datetime import datetime
 import uuid
@@ -177,3 +178,38 @@ async def create_template(template: TemplateCreate, db: AsyncSession = Depends(g
     await db.commit()
     await db.refresh(new_template)
     return new_template
+
+class KBFormatRequest(BaseModel):
+    raw_text: str
+    template_id: uuid.UUID
+
+class KBFormatResponse(BaseModel):
+    formatted_text: str
+
+@router.post("/kb/format", response_model=KBFormatResponse)
+async def format_kb_article(
+    request: KBFormatRequest, 
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Format raw text using AI and selected template.
+    """
+    template = await db.get(KBTemplate, request.template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+        
+    formatted_text = await rag_service.format_article(request.raw_text, template.template_content)
+    return KBFormatResponse(formatted_text=formatted_text)
+
+class KBPublishRequest(BaseModel):
+    title: str
+    content: str
+    destination: str = "sharepoint" # placeholder
+
+@router.post("/kb/publish")
+async def publish_kb_article(request: KBPublishRequest):
+    """
+    Mock publish endpoint (Phase 1/4).
+    """
+    # In future, this would call SharePointConnector.upload_file
+    return {"status": "success", "message": f"Article '{request.title}' published to {request.destination}"}
