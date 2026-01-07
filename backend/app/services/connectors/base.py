@@ -23,3 +23,11 @@ class DocumentConnector(ABC):
     async def get_document_content(self, source_id: str) -> BinaryIO:
         """Retrieve the raw content of a document."""
         pass
+
+    @abstractmethod
+    async def upload_file(self, filename: str, content: str, mime_type: str = "text/markdown") -> str:
+        """
+        Uploads a file to the source.
+        Returns the web URL of the uploaded file.
+        """
+        pass

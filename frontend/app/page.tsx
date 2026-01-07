@@ -36,24 +36,35 @@ export default function Home() {
   return (
     <main className="flex flex-col h-screen overflow-hidden">
       {/* Header */}
-      <header className="flex-none bg-primary text-white p-4 shadow-md flex justify-between items-center z-10">
-        <div className="flex items-center space-x-2">
-          {/* Placeholder Logo */}
-          <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center font-bold">
-            A
+      {/* Header */}
+      <header className="flex-none glass border-b border-white/20 z-10 py-3 px-6 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="relative w-8 h-8 bg-white rounded-lg overflow-hidden shadow-sm flex items-center justify-center">
+            {/* Using the logo image */}
+            <img src="/logo4color.jpg" alt="Acture" className="object-contain w-full h-full" />
           </div>
-          <h1 className="text-xl font-bold">Acture Advisor 2.0</h1>
+          <div>
+            <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#9D4EDD] tracking-tight">
+              Acture Advisor 2.0
+            </h1>
+          </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <span className="text-sm opacity-90 hidden sm:inline">
-            {session.user?.name}
-          </span>
+
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:flex flex-col items-end">
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+              {session.user?.name}
+            </span>
+            <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">
+              {session.user?.email}
+            </span>
+          </div>
           <button
             onClick={() => signOut()}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+            className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all duration-300"
             title="Sign Out"
           >
-            <LogOut size={20} />
+            <LogOut size={18} />
           </button>
         </div>
       </header>

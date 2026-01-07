@@ -17,6 +17,7 @@ class StatsResponse(BaseModel):
     total_documents: int
     pending_feedback: int
     total_users: int
+    success_rate: float
 
 class FeedbackRead(BaseModel):
     id: uuid.UUID
@@ -88,11 +89,21 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
     u_result = await db.execute(select(func.count(User.id)))
     total_users = u_result.scalar() or 0
     
+    # Success Rate (FR-5.6)
+    # Answered / Total Queries
+    a_result = await db.execute(select(func.count(Query.id)).where(Query.answered == True))
+    answered_queries = a_result.scalar() or 0
+    
+    success_rate = 0.0
+    if total_queries > 0:
+        success_rate = (answered_queries / total_queries) * 100.0
+    
     return StatsResponse(
         total_queries=total_queries,
         total_documents=total_documents,
         pending_feedback=pending_feedback,
-        total_users=total_users
+        total_users=total_users,
+        success_rate=round(success_rate, 1)
     )
 
 @router.get("/feedback", response_model=List[FeedbackRead])
@@ -209,7 +220,25 @@ class KBPublishRequest(BaseModel):
 @router.post("/kb/publish")
 async def publish_kb_article(request: KBPublishRequest):
     """
-    Mock publish endpoint (Phase 1/4).
+    Publish article to SharePoint.
     """
-    # In future, this would call SharePointConnector.upload_file
-    return {"status": "success", "message": f"Article '{request.title}' published to {request.destination}"}
+    try:
+        # Instantiate Connector (Phase 1: Assume SharePoint)
+        # Using local import to avoid circular dep if any, though unlikely here
+        from app.services.connectors.sharepoint import SharePointConnector
+        
+        connector = SharePointConnector()
+        
+        # Determine filename (slugify title)
+        safe_title = "".join(c for c in request.title if c.isalnum() or c in (' ', '-', '_')).strip()
+        safe_title = safe_title.replace(' ', '_')
+        filename = f"{safe_title}.md"
+        
+        web_url = await connector.upload_file(filename, request.content)
+        
+        return {"status": "success", "message": f"Published: {web_url}", "url": web_url}
+        
+    except Exception as e:
+        print(f"Publish failed: {e}")
+        # Return 500 but with detail
+        raise HTTPException(status_code=500, detail=f"Publish failed: {str(e)}")

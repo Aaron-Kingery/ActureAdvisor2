@@ -1,12 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  
+  /* Acture Branding */
+  --background: #F8F9FA;
+  --foreground: #2D2D2D;
+
+  /* Primary: Acture Purple Gradient Base */
   --primary: #6B2D8B;
   --secondary: #2D2D2D;
   --accent: #E8D5F0;
+
+  --font-sans: 'Inter', sans-serif;
 }
 
 @theme inline {
@@ -15,15 +19,17 @@
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
   --color-accent: var(--accent);
-  
-  --font-sans: Arial, Helvetica, sans-serif;
-  --font-mono: monospace;
+
+  --font-sans: var(--font-sans);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0F0F0F;
+    --foreground: #EDEDED;
+    --primary: #9D4EDD;
+    /* Lighter purple for dark mode */
+    --accent: #2D1B36;
   }
 }
 
@@ -31,4 +37,33 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-md bg-white/70 dark:bg-black/40 border border-white/20 shadow-xl;
+  }
+
+  .glass-card {
+    @apply backdrop-blur-lg bg-white/80 dark:bg-zinc-900/80 border border-white/10 shadow-2xl rounded-2xl;
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 8s ease infinite;
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
 }

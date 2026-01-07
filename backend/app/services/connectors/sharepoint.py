@@ -145,3 +145,40 @@ class SharePointConnector(DocumentConnector):
         except Exception as e:
             print(f"Error downloading SharePoint document {source_id}: {e}")
             return io.BytesIO(b"")
+
+    async def upload_file(self, filename: str, content: str, mime_type: str = "text/markdown") -> str:
+        """
+        Uploads a new file to the default Document Library root.
+        """
+        try:
+            token = await self._get_token()
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": mime_type
+            }
+
+            async with httpx.AsyncClient(headers=headers) as client:
+                # 1. Get Site ID
+                site_id = await self._get_site_id(client)
+
+                # 2. Get Default Drive ID
+                drive_resp = await client.get(f"https://graph.microsoft.com/v1.0/sites/{site_id}/drive")
+                drive_resp.raise_for_status()
+                drive_id = drive_resp.json()["id"]
+
+                # 3. Upload File
+                # PUT /drives/{drive-id}/root:/{filename}:/content
+                url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/root:/{filename}:/content"
+                
+                # Convert string content to bytes
+                content_bytes = content.encode('utf-8')
+                
+                resp = await client.put(url, content=content_bytes)
+                resp.raise_for_status()
+                
+                print(f"Uploaded {filename} to SharePoint.")
+                return resp.json().get("webUrl", "")
+                
+        except Exception as e:
+            print(f"Error uploading to SharePoint: {e}")
+            raise

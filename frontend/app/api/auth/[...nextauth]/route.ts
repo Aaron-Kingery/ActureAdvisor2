@@ -30,6 +30,9 @@ const handler = NextAuth({
             return session
         },
     },
+    pages: {
+        signIn: '/login', // Use our custom Premium Login UI
+    },
     // Ensure we can deploy behind reverse proxy if needed, though localhost works fine
 })
 

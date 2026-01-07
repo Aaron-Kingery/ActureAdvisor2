@@ -1,7 +1,10 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
+import { Inter } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
@@ -10,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen bg-background text-foreground">
+      <body className={`${inter.className} antialiased min-h-screen bg-background text-foreground`}>
         <SessionProvider>
           {children}
         </SessionProvider>
