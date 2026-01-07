@@ -29,11 +29,20 @@ export default function AdminLayout({
         <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex font-sans">
             {/* Sidebar */}
             <aside className="w-64 bg-[#2D2D2D] text-white flex flex-col shadow-2xl z-20">
-                <div className="p-6 border-b border-white/10">
-                    <div className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                        Admin Console
+                <div className="p-6 border-b border-white/10 flex flex-col items-start gap-4">
+                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center overflow-hidden p-1 shadow-lg">
+                        <img
+                            src="/logo4color.jpg"
+                            alt="Acture Logo"
+                            className="w-full h-full object-contain"
+                        />
                     </div>
-                    <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest">Acture Advisor</p>
+                    <div>
+                        <div className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                            Admin Console
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest">Acture Advisor</p>
+                    </div>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-1">

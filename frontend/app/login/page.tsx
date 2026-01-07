@@ -27,7 +27,7 @@ export default function LoginPage() {
                     <div className="flex flex-col items-center mb-10">
                         <div className="relative w-48 h-16 mb-6">
                             <Image
-                                src="/logo4color.jpg"
+                                src="/logo-acture.svg"
                                 alt="Acture Solutions"
                                 fill
                                 className="object-contain"
