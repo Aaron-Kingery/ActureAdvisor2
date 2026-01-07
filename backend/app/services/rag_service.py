@@ -30,7 +30,7 @@ class RAGService:
             # OpenAI LLM
             self.openai_llm = ChatOpenAI(
                 api_key=settings.OPENAI_API_KEY,
-                model="gpt-3.5-turbo",
+                model="gpt-4o",
                 temperature=0.7
             )
         else:
@@ -41,9 +41,11 @@ class RAGService:
             )
             self.openai_llm = None
 
+        # Accuracy > Speed configuration
+        # Larger chunks (approx 1-2 pages) ensure lists and tables aren't split.
         self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200
+            chunk_size=4000,
+            chunk_overlap=1000
         )
 
     async def _get_embedding(self, text: str) -> List[float]:

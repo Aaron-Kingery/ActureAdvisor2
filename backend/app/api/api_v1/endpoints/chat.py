@@ -37,7 +37,7 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
     user_id = user.id if user else None
 
     # 1. Search
-    chunks = await rag_service.search(request.message, db, limit=10)
+    chunks = await rag_service.search(request.message, db, limit=5)
     
     # 2. Generate
     if not chunks:

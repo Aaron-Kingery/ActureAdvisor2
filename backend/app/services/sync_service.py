@@ -2,6 +2,7 @@ import hashlib
 from typing import List
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
 from app.models import Document, DocumentChunk
 from app.services.connectors.base import DocumentConnector
 from app.services.document_processor import DocumentProcessor
@@ -95,7 +96,7 @@ class SyncService:
             doc = await self.session.get(Document, existing_id)
             doc.title = meta.title
             doc.content_hash = content_hash
-            doc.last_synced = meta.updated_at
+            doc.last_synced = datetime.utcnow()
             
             # Remove old chunks
             await self.session.execute(delete(DocumentChunk).where(DocumentChunk.document_id == existing_id))
@@ -105,7 +106,7 @@ class SyncService:
                 title=meta.title,
                 file_type=meta.file_type,
                 content_hash=content_hash,
-                last_synced=meta.updated_at
+                last_synced=datetime.utcnow()
             )
             self.session.add(doc)
             await self.session.flush() # Get ID

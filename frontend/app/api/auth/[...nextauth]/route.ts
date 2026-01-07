@@ -3,16 +3,16 @@ import AzureADProvider from "next-auth/providers/azure-ad"
 import GoogleProvider from "next-auth/providers/google"
 
 const providers = []
+const authProvider = process.env.AUTH_PROVIDER || 'google'
 
-if (process.env.AUTH_PROVIDER === 'google') {
+if (authProvider === 'google') {
     providers.push(
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID || "",
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
         })
     )
-} else {
-    // Default to Microsoft
+} else if (authProvider === 'microsoft' || authProvider === 'azure-ad') {
     providers.push(
         AzureADProvider({
             clientId: process.env.AZURE_AD_CLIENT_ID || "",

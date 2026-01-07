@@ -2,14 +2,25 @@
 
 import { signIn } from "next-auth/react";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function LoginPage() {
+    const [providers, setProviders] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = async (provider: string) => {
+    useEffect(() => {
+        const loadProviders = async () => {
+            // Dynamically import to avoid server/client mismatches if any, though next-auth/react is safe
+            const { getProviders } = await import("next-auth/react");
+            const res = await getProviders();
+            setProviders(res);
+        };
+        loadProviders();
+    }, []);
+
+    const handleLogin = async (providerId: string) => {
         setIsLoading(true);
-        await signIn(provider, { callbackUrl: "/" });
+        await signIn(providerId, { callbackUrl: "/" });
     };
 
     return (
@@ -20,45 +31,41 @@ export default function LoginPage() {
                     {/* Subtle background blob for the left side */}
                     <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl opacity-50" />
                 </div>
-
                 <div className="glass-card w-full max-w-md p-8 sm:p-12 border-white/20 dark:border-white/10 relative overflow-hidden group hover:border-primary/30 transition-colors duration-500">
 
-                    {/* Logo Section */}
-                    <div className="flex flex-col items-center mb-10">
-                        <div className="relative w-48 h-16 mb-6">
-                            <Image
-                                src="/logo-acture.svg"
-                                alt="Acture Solutions"
-                                fill
-                                className="object-contain"
-                                priority
-                            />
-                        </div>
-                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#9D4EDD] mb-2 tracking-tight">
-                            Acture Advisor 2.0
-                        </h1>
-                        <p className="text-sm text-gray-500 font-medium tracking-wide uppercase">Internal Knowledge Base</p>
-                    </div>
+                    {/* ... (keep Logo Section) ... */}
 
                     {/* Login Actions */}
                     <div className="space-y-4">
-                        <button
-                            onClick={() => handleLogin('google')}
-                            disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-3 py-3.5 px-4 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg transition-all duration-200 group/btn"
-                        >
-                            <img src="https://authjs.dev/img/providers/google.svg" className="w-5 h-5 group-hover/btn:rotate-12 transition-transform duration-300" alt="Google" />
-                            <span className="font-semibold text-gray-700 dark:text-gray-200">Sign in with Google</span>
-                        </button>
+                        {!providers ? (
+                            <div className="text-center text-gray-400 text-sm">Loading login options...</div>
+                        ) : (
+                            Object.values(providers).map((provider: any) => (
+                                <div key={provider.id}>
+                                    {provider.id === 'google' && (
+                                        <button
+                                            onClick={() => handleLogin(provider.id)}
+                                            disabled={isLoading}
+                                            className="w-full flex items-center justify-center gap-3 py-3.5 px-4 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg transition-all duration-200 group/btn"
+                                        >
+                                            <img src="https://authjs.dev/img/providers/google.svg" className="w-5 h-5 group-hover/btn:rotate-12 transition-transform duration-300" alt="Google" />
+                                            <span className="font-semibold text-gray-700 dark:text-gray-200">Sign in with {provider.name}</span>
+                                        </button>
+                                    )}
 
-                        <button
-                            onClick={() => handleLogin('azure-ad')}
-                            disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-3 py-3.5 px-4 bg-[#2F2F2F] text-white rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg hover:bg-black transition-all duration-200"
-                        >
-                            <img src="https://authjs.dev/img/providers/microsoft-entra-id.svg" className="w-5 h-5 invert" alt="Microsoft" />
-                            <span className="font-semibold">Sign in with Microsoft</span>
-                        </button>
+                                    {provider.id === 'azure-ad' && (
+                                        <button
+                                            onClick={() => handleLogin(provider.id)}
+                                            disabled={isLoading}
+                                            className="w-full flex items-center justify-center gap-3 py-3.5 px-4 bg-[#2F2F2F] text-white rounded-xl hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg hover:bg-black transition-all duration-200"
+                                        >
+                                            <img src="https://authjs.dev/img/providers/microsoft-entra-id.svg" className="w-5 h-5 invert" alt="Microsoft" />
+                                            <span className="font-semibold">Sign in with Microsoft</span>
+                                        </button>
+                                    )}
+                                </div>
+                            ))
+                        )}
                     </div>
 
                     <div className="mt-8 text-center">
@@ -100,6 +107,6 @@ export default function LoginPage() {
                     </div>
                 </div>
             </div>
-        </main>
+        </main >
     );
 }

@@ -210,6 +210,34 @@ async def format_kb_article(
     formatted_text = await rag_service.format_article(request.raw_text, template.template_content)
     return KBFormatResponse(formatted_text=formatted_text)
 
+class DocumentRead(BaseModel):
+    id: uuid.UUID
+    title: str
+    source_url: str
+    file_type: str
+    created_at: datetime
+    last_synced: datetime
+    
+    class Config:
+        from_attributes = True
+
+@router.get("/documents", response_model=List[DocumentRead])
+async def list_documents(
+    limit: int = 100,
+    skip: int = 0,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    List indexed documents.
+    """
+    result = await db.execute(
+        select(Document)
+        .order_by(desc(Document.created_at))
+        .offset(skip)
+        .limit(limit)
+    )
+    return result.scalars().all()
+
 class KBPublishRequest(BaseModel):
     title: str
     content: str

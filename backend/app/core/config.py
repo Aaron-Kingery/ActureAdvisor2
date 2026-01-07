@@ -7,14 +7,15 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Acture Advisor 2.0"
     API_V1_STR: str = "/api"
     SECRET_KEY: str = "changethis"
-    ENVIRONMENT: str = "development"
+    ENVIRONMENT: str = "production"
+    DEBUG: bool = False
     
     # Database (Used for constructing URL if not provided directly, or unrelated usage)
     POSTGRES_USER: Optional[str] = "user"
     POSTGRES_PASSWORD: Optional[str] = "password"
     POSTGRES_DB: Optional[str] = "acture_advisor"
     DATABASE_URL: PostgresDsn
-    
+
     # Auth
     AUTH_PROVIDER: str = "google" # or 'microsoft'
     
@@ -32,7 +33,7 @@ class Settings(BaseSettings):
     GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = None
     
     # CORS
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = ["http://localhost:3000"]
+    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = ["https://localhost", "http://localhost", "http://localhost:3000", "https://advisor.acture.ai"]
 
     model_config = SettingsConfigDict(
         env_file=".env", 
