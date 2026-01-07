@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Union[str, None] = None
     
     # CORS
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = ["http://localhost:3000"]
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
