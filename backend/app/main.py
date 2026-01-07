@@ -35,7 +35,8 @@ if settings.BACKEND_CORS_ORIGINS:
 
 # Include routers
 app.include_router(health.router, prefix="/api", tags=["health"])
-from app.api.api_v1.endpoints import chat, sync
+from app.api.api_v1.endpoints import chat, sync, admin
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(sync.router, prefix="/api/sync", tags=["sync"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
