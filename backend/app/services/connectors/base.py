@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, BinaryIO
+from typing import List, Optional, BinaryIO, AsyncGenerator
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -15,7 +15,7 @@ class DocumentMetadata:
 
 class DocumentConnector(ABC):
     @abstractmethod
-    async def list_documents(self) -> List[DocumentMetadata]:
+    async def list_documents(self) -> AsyncGenerator[DocumentMetadata, None]:
         """List available documents from the source."""
         pass
 

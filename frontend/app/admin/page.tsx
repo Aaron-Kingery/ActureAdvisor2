@@ -3,20 +3,27 @@
 import { useEffect, useState } from 'react';
 
 interface Stats {
-    total_queries: int;
-    total_documents: int;
-    pending_feedback: int;
-    total_users: int;
+    total_queries: number;
+    total_documents: number;
+    pending_feedback: number;
+    total_users: number;
 }
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState<Stats | null>(null);
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/admin/stats`)
-            .then(res => res.json())
-            .then(data => setStats(data))
-            .catch(err => console.error(err));
+        const fetchStats = () => {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/admin/stats`)
+                .then(res => res.json())
+                .then(data => setStats(data))
+                .catch(err => console.error(err));
+        };
+
+        fetchStats();
+        const interval = setInterval(fetchStats, 3000); // Poll every 3 seconds
+
+        return () => clearInterval(interval);
     }, []);
 
     if (!stats) return <div>Loading statistics...</div>;
@@ -33,19 +40,48 @@ export default function AdminDashboard() {
             </div>
 
             <div className="mt-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+                <h2 className="text-xl font-semibold mb-4">Data Sync Actions</h2>
                 <div className="flex gap-4">
-                    <button className="bg-acture-primary text-white px-4 py-2 rounded hover:opacity-90">
-                        Upload New Document
-                    </button>
-                    <button className="border border-acture-primary text-acture-primary px-4 py-2 rounded hover:bg-gray-50">
-                        View Recent Logs
-                    </button>
+                    <ActionBtn label="Sync SharePoint" connector="sharepoint" />
+                    <ActionBtn label="Sync Google Drive" connector="google" />
+                    <div className="border-l border-gray-200 mx-2"></div>
+                    <a href="/admin/documents" className="border border-primary text-primary px-4 py-2 rounded hover:bg-gray-50 flex items-center gap-2">
+                        View Documents
+                    </a>
                 </div>
             </div>
         </div>
     );
 }
+
+function ActionBtn({ label, connector }: { label: string, connector: string }) {
+    const [loading, setLoading] = useState(false);
+
+    const trigger = async () => {
+        setLoading(true);
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+            await fetch(`${apiUrl}/sync/trigger?connector=${connector}`, { method: 'POST' });
+            alert(`Sync triggered for ${connector}`);
+        } catch (e) {
+            alert('Failed to trigger sync');
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <button
+            onClick={trigger}
+            disabled={loading}
+            className="bg-primary text-white px-4 py-2 rounded hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+        >
+            {loading ? 'Syncing...' : label}
+        </button>
+    );
+}
+
 
 function StatsCard({ title, value, color }: { title: string, value: number, color: string }) {
     return (

@@ -20,26 +20,26 @@ except ImportError:
 
 class RAGService:
     def __init__(self):
-        # Embeddings (Always Local for now)
-        self.embeddings = OllamaEmbeddings(
-            base_url=settings.OLLAMA_BASE_URL,
-            model="nomic-embed-text"
-        )
-        
-        # Ollama LLM
-        self.ollama_llm = OllamaLLM(
-            base_url=settings.OLLAMA_BASE_URL,
-            model="llama3.2:3b"
-        )
-        
-        # OpenAI LLM
-        self.openai_llm = None
+        # Embeddings
         if HAS_OPENAI and settings.OPENAI_API_KEY:
+            from langchain_openai import OpenAIEmbeddings
+            self.embeddings = OpenAIEmbeddings(
+                api_key=settings.OPENAI_API_KEY,
+                model="text-embedding-3-small"
+            )
+            # OpenAI LLM
             self.openai_llm = ChatOpenAI(
                 api_key=settings.OPENAI_API_KEY,
                 model="gpt-3.5-turbo",
                 temperature=0.7
             )
+        else:
+            # Fallback to Ollama
+            self.embeddings = OllamaEmbeddings(
+                base_url=settings.OLLAMA_BASE_URL,
+                model="nomic-embed-text"
+            )
+            self.openai_llm = None
 
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
@@ -55,8 +55,22 @@ class RAGService:
         """
         chunks = self.text_splitter.create_documents([content])
         
+        # Prepare texts
+        texts = [chunk.page_content for chunk in chunks]
+        
+        # Batch Async Embeddings (Prevents blocking Event Loop)
+        if HAS_OPENAI and settings.OPENAI_API_KEY:
+            embeddings = await self.embeddings.aembed_documents(texts)
+        else:
+             # OllamaFallback might not support batch async well, but we try standard embed_documents or query loop
+             # For Nomic (Ollama), we can iterate or use embed_documents if supported
+             # But using aembed_query in loop is safer for concurrency yield
+             embeddings = []
+             for text in texts:
+                 embeddings.append(await self._get_embedding(text))
+
         for i, chunk in enumerate(chunks):
-            embedding = await self._get_embedding(chunk.page_content)
+            embedding = embeddings[i]
             
             db_chunk = DocumentChunk(
                 document_id=document.id,
@@ -85,7 +99,10 @@ class RAGService:
         """
         Generates a response using the LLM with fallback logic.
         """
-        context_text = "\n\n".join([chunk.content for chunk in context_chunks])
+        context_text = "\n\n".join([
+            f"Source: {chunk.document.title}\nContent:\n{chunk.content}" 
+            for chunk in context_chunks
+        ])
         
         system_prompt = f"""You are Acture Advisor, an AI assistant for Acture Solutions.
 Use the following pieces of context to answer the user's question.

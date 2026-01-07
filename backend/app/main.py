@@ -24,14 +24,25 @@ async def stop_scheduler():
 
 from fastapi.middleware.cors import CORSMiddleware
 
+# Explicitly define origins for dev troubleshooting
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+]
+
+# Merge with settings if available (and parse string if needed)
 if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    for origin in settings.BACKEND_CORS_ORIGINS:
+        origins.append(str(origin))
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include routers
 app.include_router(health.router, prefix="/api", tags=["health"])

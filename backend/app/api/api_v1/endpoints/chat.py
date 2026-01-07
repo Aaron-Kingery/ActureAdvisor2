@@ -28,7 +28,7 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
     Chat endpoint. For Phase 1, assumes anonymous or single test user.
     """
     # 1. Search
-    chunks = await rag_service.search(db, request.message)
+    chunks = await rag_service.search(request.message, db, limit=10)
     
     # 2. Generate
     if not chunks:

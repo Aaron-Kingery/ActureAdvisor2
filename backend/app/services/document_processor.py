@@ -12,16 +12,23 @@ class DocumentProcessor:
         """
         file_type = file_type.lower()
         
+        text = ""
         if 'pdf' in file_type:
-            return DocumentProcessor._extract_from_pdf(file_stream)
+            text = DocumentProcessor._extract_from_pdf(file_stream)
         elif 'docx' in file_type or 'word' in file_type:
-            return DocumentProcessor._extract_from_docx(file_stream)
+            text = DocumentProcessor._extract_from_docx(file_stream)
         elif 'xlsx' in file_type or 'excel' in file_type or 'spreadsheet' in file_type:
-            return DocumentProcessor._extract_from_xlsx(file_stream)
-        elif 'text' in file_type or 'md' in file_type:
-            return file_stream.read().decode('utf-8', errors='ignore')
+            text = DocumentProcessor._extract_from_xlsx(file_stream)
+        elif 'text' in file_type or 'md' in file_type or 'txt' in file_type:
+            text = file_stream.read().decode('utf-8', errors='ignore')
         else:
             raise ValueError(f"Unsupported file type: {file_type}")
+            
+        # Sanitize: Remove null bytes which cause PostgreSQL errors
+        if text:
+            text = text.replace('\x00', '')
+            
+        return text
 
     @staticmethod
     def _extract_from_pdf(stream: io.BytesIO) -> str:
@@ -43,8 +50,37 @@ class DocumentProcessor:
         for sheet in wb.sheetnames:
             ws = wb[sheet]
             text.append(f"Sheet: {sheet}")
-            for row in ws.rows:
-                row_text = " | ".join([str(cell.value) for cell in row if cell.value is not None])
-                if row_text:
-                    text.append(row_text)
+            
+            rows = list(ws.rows)
+            if not rows:
+                continue
+                
+            # Determine max columns to handle inconsistent rows
+            max_cols = 0
+            for row in rows:
+                max_cols = max(max_cols, len(row))
+            
+            # Helper to format row
+            def format_row(row_cells):
+                cells = [str(cell.value).strip().replace('\n', ' ') if cell.value is not None else "" for cell in row_cells]
+                # Pad to max cols if needed (though usually not strict for markdown, it helps alignment)
+                return "| " + " | ".join(cells) + " |"
+
+            # Header
+            header_row = rows[0]
+            text.append(format_row(header_row))
+            
+            # Separator
+            separator = "| " + " | ".join(["---"] * len(header_row)) + " |"
+            text.append(separator)
+            
+            # Data
+            for row in rows[1:]:
+                # skip empty rows
+                if all(cell.value is None for cell in row):
+                    continue
+                text.append(format_row(row))
+                
+            text.append("\n") # Spacing between sheets
+            
         return "\n".join(text)

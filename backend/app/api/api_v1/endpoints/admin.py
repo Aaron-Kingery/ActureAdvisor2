@@ -46,7 +46,25 @@ class TemplateRead(TemplateCreate):
     class Config:
         from_attributes = True
 
+class DocumentRead(BaseModel):
+    id: uuid.UUID
+    title: str
+    source_url: str
+    file_type: str
+    last_synced: datetime
+    
+    class Config:
+        from_attributes = True
+
 # --- Endpoints ---
+
+@router.get("/documents", response_model=List[DocumentRead])
+async def list_documents(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+    """
+    List indexed documents.
+    """
+    result = await db.execute(select(Document).order_by(desc(Document.last_synced)).offset(skip).limit(limit))
+    return result.scalars().all()
 
 @router.get("/stats", response_model=StatsResponse)
 async def get_stats(db: AsyncSession = Depends(get_db)):

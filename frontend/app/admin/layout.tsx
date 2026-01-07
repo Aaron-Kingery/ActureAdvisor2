@@ -28,8 +28,8 @@ export default function AdminLayout({
     return (
         <div className="min-h-screen bg-gray-50 flex">
             {/* Sidebar */}
-            <aside className="w-64 bg-acture-primary text-white p-6 shadow-xl">
-                <div className="text-2xl font-bold mb-8 text-acture-accent">Admin Console</div>
+            <aside className="w-64 bg-primary text-white p-6 shadow-xl">
+                <div className="text-2xl font-bold mb-8 text-accent">Admin Console</div>
                 <nav className="space-y-4">
                     <Link href="/admin" className="block p-3 rounded hover:bg-white/10 transition">
                         Dashboard

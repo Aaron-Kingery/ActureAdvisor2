@@ -46,7 +46,7 @@ export default function TemplatesPage() {
                     {templates.length === 0 && <p className="text-gray-500">No templates defined.</p>}
                     {templates.map(t => (
                         <div key={t.id} className="bg-white p-4 rounded shadow-sm border border-gray-200">
-                            <h3 className="font-bold text-acture-primary">{t.name}</h3>
+                            <h3 className="font-bold text-primary">{t.name}</h3>
                             <pre className="mt-2 text-xs bg-gray-50 p-2 rounded overflow-x-auto">
                                 {t.template_content}
                             </pre>
@@ -78,7 +78,7 @@ export default function TemplatesPage() {
                                 required
                             />
                         </div>
-                        <button type="submit" className="w-full bg-acture-primary text-white py-2 rounded font-bold hover:brightness-110">
+                        <button type="submit" className="w-full bg-primary text-white py-2 rounded font-bold hover:brightness-110">
                             Save Template
                         </button>
                     </form>

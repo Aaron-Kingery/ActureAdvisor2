@@ -1,4 +1,4 @@
-from typing import List, BinaryIO
+from typing import List, BinaryIO, AsyncGenerator
 from datetime import datetime
 import io
 import os
@@ -13,11 +13,15 @@ class GoogleDriveConnector(DocumentConnector):
         self.folder_id = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
         self.credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
         
-    async def list_documents(self) -> List[DocumentMetadata]:
+    async def list_documents(self) -> AsyncGenerator[DocumentMetadata, None]:
         # Placeholder logic
         if not self.folder_id or not self.credentials_json:
             print("Google Drive credentials not configured.")
-            return []
+            # yield nothing
+            return
+            
+        # Real implementation would use Drive API list()
+        # yield ...
             
         # Real implementation would use Drive API list()
         return []
