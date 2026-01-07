@@ -13,6 +13,7 @@ router = APIRouter()
 
 class ChatRequest(BaseModel):
     message: str
+    user_email: Optional[str] = None
 
 class Source(BaseModel):
     title: str
@@ -28,9 +29,9 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
     """
     Chat endpoint. Saves query and feedback placeholder.
     """
-    # 0. Get User (Phase 1: seeded user)
-    # Ideally this comes from Depends(get_current_user)
-    # logic to find the first user (usually admin seeded)
+    # 0. Get User Context
+    # Optimization: Store email directly to avoid lookup blocking. 
+    # Fallback to simple "limit 1" to satisfy FK constraint without precise lookup if needed.
     result = await db.execute(select(User).limit(1))
     user = result.scalar_one_or_none()
     user_id = user.id if user else None
@@ -62,6 +63,7 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
     # 3. Store Query
     new_query = Query(
         user_id=user_id, # Fallback or error if no user seeded? We seeded users.
+        user_email=request.user_email, # Direct storage
         question=request.message,
         response=response_text,
         answered=answered_status,

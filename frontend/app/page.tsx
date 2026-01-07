@@ -41,7 +41,7 @@ export default function Home() {
         <div className="flex items-center gap-3">
           <div className="relative w-8 h-8 bg-white rounded-lg overflow-hidden shadow-sm flex items-center justify-center">
             {/* Using the logo image */}
-            <img src="/logo4color.jpg" alt="Acture" className="object-contain w-full h-full" />
+            <img src="/logo-acture.svg" alt="Acture" className="object-contain w-full h-full" />
           </div>
           <div>
             <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#9D4EDD] tracking-tight">

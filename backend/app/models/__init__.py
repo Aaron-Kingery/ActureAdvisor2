@@ -67,6 +67,7 @@ class Query(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    user_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True) # Direct storage to avoid lookups
     question: Mapped[str] = mapped_column(Text)
     response: Mapped[str] = mapped_column(Text)
     answered: Mapped[bool] = mapped_column(Boolean, default=False)

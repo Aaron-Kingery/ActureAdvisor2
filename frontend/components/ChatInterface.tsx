@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { Send, ThumbsUp, ThumbsDown, Bot, User, FileText, AlertCircle } from "lucide-react";
@@ -19,6 +20,7 @@ interface Message {
 }
 
 export default function ChatInterface() {
+    const { data: session } = useSession();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -93,7 +95,10 @@ export default function ChatInterface() {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ message: userMessage.content }),
+                body: JSON.stringify({
+                    message: userMessage.content,
+                    user_email: session?.user?.email
+                }),
             });
 
             if (!res.ok) {

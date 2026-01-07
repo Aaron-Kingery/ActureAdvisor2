@@ -26,78 +26,48 @@ class FeedbackRead(BaseModel):
     status: str
     admin_notes: str | None
     created_at: datetime
-    query_text: str | None # Enriched
+    query_text: str | None
     response_text: str | None
+    user_email: str | None # Added field
 
     class Config:
         from_attributes = True
 
 class FeedbackUpdate(BaseModel):
     status: FeedbackStatus
-    admin_notes: str | None
+    admin_notes: str | None = None
 
-class TemplateCreate(BaseModel):
-    name: str
-    template_content: str
-
-class TemplateRead(TemplateCreate):
-    id: uuid.UUID
-    created_at: datetime
-    updated_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-class DocumentRead(BaseModel):
-    id: uuid.UUID
-    title: str
-    source_url: str
-    file_type: str
-    last_synced: datetime
-    
-    class Config:
-        from_attributes = True
-
-# --- Endpoints ---
-
-@router.get("/documents", response_model=List[DocumentRead])
-async def list_documents(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
-    """
-    List indexed documents.
-    """
-    result = await db.execute(select(Document).order_by(desc(Document.last_synced)).offset(skip).limit(limit))
-    return result.scalars().all()
+# ...
 
 @router.get("/stats", response_model=StatsResponse)
 async def get_stats(db: AsyncSession = Depends(get_db)):
     """
-    Get system-wide statistics.
+    Get system statistics.
     """
-    # Total Queries
+    # Count queries
     q_result = await db.execute(select(func.count(Query.id)))
     total_queries = q_result.scalar() or 0
     
-    # Total Documents
+    # Count docs
     d_result = await db.execute(select(func.count(Document.id)))
     total_documents = d_result.scalar() or 0
     
-    # Pending Feedback
+    # Count pending feedback
     f_result = await db.execute(select(func.count(Feedback.id)).where(Feedback.status == FeedbackStatus.NEW))
     pending_feedback = f_result.scalar() or 0
     
-    # Total Users
+    # Count users
     u_result = await db.execute(select(func.count(User.id)))
     total_users = u_result.scalar() or 0
     
-    # Success Rate (FR-5.6)
-    # Answered / Total Queries
+    # Calculate success rate
     a_result = await db.execute(select(func.count(Query.id)).where(Query.answered == True))
     answered_queries = a_result.scalar() or 0
     
     success_rate = 0.0
     if total_queries > 0:
         success_rate = (answered_queries / total_queries) * 100.0
-    
+        
     return StatsResponse(
         total_queries=total_queries,
         total_documents=total_documents,
@@ -122,11 +92,26 @@ async def list_feedback(
     result = await db.execute(stmt)
     feedbacks = result.scalars().all()
     
-    # Enrich with query text (N+1 crude fix, acceptable for small admin backend)
-    # Ideally use a join in the initial select
+    # Enrich with query text and user (N+1 crude fix)
     response_list = []
     for fb in feedbacks:
         query = await db.get(Query, fb.query_id)
+        user_email = None
+        query_text = None
+        response_text = None
+        
+        if query:
+            query_text = query.question
+            response_text = query.response
+            # Optimization: Read directly from Query column
+            user_email = query.user_email
+            
+            # Fallback legacy: try to get from User table if query.user_email is null but user_id is set
+            if not user_email and query.user_id:
+                 user = await db.get(User, query.user_id)
+                 if user:
+                     user_email = user.email
+
         response_list.append(FeedbackRead(
             id=fb.id,
             query_id=fb.query_id,
@@ -134,8 +119,9 @@ async def list_feedback(
             status=fb.status.value,
             admin_notes=fb.admin_notes,
             created_at=fb.created_at,
-            query_text=query.question if query else None,
-            response_text=query.response if query else None
+            query_text=query_text,
+            response_text=response_text,
+            user_email=user_email
         ))
         
     return response_list
@@ -173,6 +159,18 @@ async def update_feedback(
         query_text=query.question if query else None,
         response_text=query.response if query else None
     )
+
+class TemplateRead(BaseModel):
+    id: uuid.UUID
+    name: str
+    template_content: str
+    
+    class Config:
+        from_attributes = True
+
+class TemplateCreate(BaseModel):
+    name: str
+    template_content: str
 
 @router.get("/templates", response_model=List[TemplateRead])
 async def list_templates(db: AsyncSession = Depends(get_db)):

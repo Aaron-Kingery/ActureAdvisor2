@@ -10,6 +10,7 @@ interface FeedbackItem {
     response_text: string;
     admin_notes: string | null;
     created_at: string;
+    user_email: string | null;
 }
 
 export default function FeedbackPage() {
@@ -56,7 +57,10 @@ export default function FeedbackPage() {
                                     {item.status}
                                 </span>
                             </div>
-                            <p className="text-sm text-gray-800 line-clamp-2">{item.query_text}</p>
+                            <div className="mb-2">
+                                <p className="text-xs font-semibold text-gray-500 mb-1">{item.user_email || 'Unknown User'}</p>
+                                <p className="text-sm text-gray-800 line-clamp-2">{item.query_text}</p>
+                            </div>
                             <p className="text-xs text-gray-400 mt-2">{new Date(item.created_at).toLocaleString()}</p>
                         </div>
                     ))}
@@ -68,6 +72,11 @@ export default function FeedbackPage() {
                 {selectedItem ? (
                     <div>
                         <h2 className="text-xl font-bold mb-4">Review Feedback</h2>
+
+                        <div className="mb-6">
+                            <label className="text-xs font-bold text-gray-400 uppercase">User</label>
+                            <div className="bg-gray-50 p-3 rounded mt-1 text-sm font-semibold">{selectedItem.user_email || 'Unknown User'}</div>
+                        </div>
 
                         <div className="mb-6">
                             <label className="text-xs font-bold text-gray-400 uppercase">User Query</label>
