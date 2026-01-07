@@ -4,9 +4,25 @@ sqlalchemy>=2.0.29
 alembic
 psycopg2-binary
 pgvector>=0.2.5
+# Document Connectors
+msgraph-core
+azure-identity
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+
+# Document Processing
+pymupdf  # fitz
+python-docx
+openpyxl
+
+# Scheduling
+APScheduler
 httpx
 langchain
 langchain-community
+langchain-ollama
+langchain-openai
 langchain-postgres
 pydantic
 pydantic-settings
