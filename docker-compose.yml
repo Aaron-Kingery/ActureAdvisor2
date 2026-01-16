@@ -96,7 +96,7 @@ services:
     image: prodrigestivill/postgres-backup-local
     container_name: acture-backup
     restart: always
-    user: postgres:postgres # Optional: usually root is fine in this container
+    # user: postgres:postgres # Optional: usually root is fine in this container
     volumes:
       - ./backups:/backups
     depends_on:
