@@ -1,0 +1,11 @@
+# Environment Variables
+backend/.env
+frontend/.env.local
+.env
+
+# Certificates
+certs/
+data/certbot/
+
+# Database Backups
+backups/

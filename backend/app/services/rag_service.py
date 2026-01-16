@@ -33,11 +33,20 @@ class RAGService:
                 model="gpt-4o",
                 temperature=0.7
             )
+            # Initialize Ollama as fallback
+            self.ollama_llm = OllamaLLM(
+                base_url=settings.OLLAMA_BASE_URL,
+                model="mistral" 
+            )
         else:
             # Fallback to Ollama
             self.embeddings = OllamaEmbeddings(
                 base_url=settings.OLLAMA_BASE_URL,
                 model="nomic-embed-text"
+            )
+            self.ollama_llm = OllamaLLM(
+                base_url=settings.OLLAMA_BASE_URL,
+                model="mistral" 
             )
             self.openai_llm = None
 
