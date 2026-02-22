@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  db:
+    image: pgvector/pgvector:pg15
+    container_name: acture-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-acture_advisor}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - acture-network
+    restart: always
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: acture-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - acture-network
+    restart: always
+    # Pull models on startup in entrypoint or manual step?
+    # For now, we rely on manual pull or a separate init script.
+
+  backend:
+    build:
+      context: ./backend
+    container_name: acture-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - POSTGRES_DB=${POSTGRES_DB:-acture_advisor}
+    depends_on:
+      - db
+      - ollama
+    networks:
+      - acture-network
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+networks:
+  acture-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  ollama_data:

@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-acture-primary: #1e40af;
+  --color-acture-secondary: #1e3a5f;
+  --color-acture-accent: #3b82f6;
+  --color-acture-surface: #f8fafc;
+  --color-acture-danger: #dc2626;
+  --color-acture-warning: #f59e0b;
+  --color-acture-success: #16a34a;
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--color-acture-surface);
+}

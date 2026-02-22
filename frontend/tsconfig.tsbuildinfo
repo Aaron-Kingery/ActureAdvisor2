@@ -1,0 +1,1 @@
+{"root":["./src/App.tsx","./src/acture-ui.d.ts","./src/main.tsx","./src/api/client.ts","./src/hooks/useAuth.ts","./src/pages/Admin.tsx","./src/pages/Chat.tsx","./src/pages/Documents.tsx","./src/pages/Feedback.tsx"],"version":"5.9.3"}
