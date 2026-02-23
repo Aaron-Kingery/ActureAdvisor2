@@ -1,4 +1,5 @@
 import hashlib
+import traceback
 from typing import List
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,63 +21,55 @@ class SyncService:
         Synchronizes documents from a given connector.
         """
         try:
-            # 1. List documents from source (Streaming)
             logger.info("Scanning documents from source...")
             
-            # 2. Get existing documents from DB
             result = await self.session.execute(select(Document))
             db_docs = result.scalars().all()
-            db_docs_map = {doc.source_url: doc for doc in db_docs}
+            # Extract plain Python values to avoid ORM lazy-load after rollback
+            db_id_map = {doc.source_url: doc.id for doc in db_docs}
+            db_hash_map = {doc.source_url: doc.content_hash for doc in db_docs}
             
-            # 3. Process each source document
-
-            # We want to process them as we find them (Streaming)
             current_urls = set()
             processed_count = 0
             
             async for meta in connector.list_documents():
                 current_urls.add(meta.source_url)
                 
-                # Check if exists and if needs update
                 try:
-                    if meta.source_url in db_docs_map:
-                        existing = db_docs_map[meta.source_url]
-                        # Simple change detection
-                        if meta.content_hash and meta.content_hash == existing.content_hash:
-                             continue # No change
+                    existing_id = db_id_map.get(meta.source_url)
+                    if existing_id:
+                        existing_hash = db_hash_map.get(meta.source_url)
+                        if meta.content_hash and meta.content_hash == existing_hash:
+                             continue
                         
                         logger.info(f"Updating document: {meta.title}")
-                        await self._process_document(connector, meta, existing_id=existing.id)
+                        await self._process_document(connector, meta, existing_id=existing_id)
                     else:
                         logger.info(f"New document found: {meta.title}")
                         await self._process_document(connector, meta)
                     
-                    # Commit every document or small batch to show progress
-                    # Committing every item is safest for long running jobs to show progress in UI
-                    # though slower. Given the context (background sync), safety and UX > pure speed.
                     await self.session.commit()
                     processed_count += 1
                     
                 except Exception as doc_err:
                     logger.error(f"Failed to process document {meta.title} ({meta.source_url}): {doc_err}")
-                    await self.session.rollback() # Rollback the failed one? 
-                    # If we commit per doc, we need to be careful.
-                    # Since we committed previous ones, rollback here only affects THIS transaction (which is just this doc if we commit after each).
+                    await self.session.rollback()
                     continue
 
-            # 4. Handle Deletions (only possible if we have seen all source docs)
-            # Since we iterate via generator, at the end `current_urls` contains all valid source URLs.
-            # So deletion logic remains same.
-            for url, doc in db_docs_map.items():
+            # Handle deletions
+            for url, doc_id in db_id_map.items():
                 if url not in current_urls:
-                    logger.info(f"Deleting document: {doc.title}")
-                    await self.session.delete(doc)
+                    logger.info(f"Deleting removed document (id={doc_id})")
+                    doc = await self.session.get(Document, doc_id)
+                    if doc:
+                        await self.session.delete(doc)
             
             await self.session.commit()
             logger.info(f"Sync completed. Processed {processed_count} documents.")
 
         except Exception as e:
             logger.error(f"Sync failed: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             await self.session.rollback()
             raise
 
@@ -108,7 +101,7 @@ class SyncService:
                 last_synced=meta.updated_at
             )
             self.session.add(doc)
-            await self.session.flush() # Get ID
+            await self.session.flush()  # Get ID
 
         # Chunk and Embed
         logger.info(f"Chunking and embedding {meta.title}...")

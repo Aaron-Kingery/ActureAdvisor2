@@ -50,37 +50,24 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.core.db import AsyncSessionLocal
 from app.services.sync_service import SyncService
 from app.services.rag_service import rag_service
-
-
 async def run_sync_job():
     """Scheduled job to sync documents from SharePoint."""
     async with AsyncSessionLocal() as session:
         sync_svc = SyncService(session, rag_service)
-        from app.services.connectors.sharepoint_connector import SharePointConnector
+        from app.services.connectors.sharepoint import SharePointConnector
 
-        connector = SharePointConnector(
-            site_url=settings.SHAREPOINT_SITE_URL or "",
-            client_id=settings.AZURE_AD_CLIENT_ID or "",
-            client_secret=settings.AZURE_AD_CLIENT_SECRET or "",
-            tenant_id=settings.AZURE_AD_TENANT_ID or "",
-        )
+        connector = SharePointConnector()
         try:
             await sync_svc.sync_connector(connector)
         except Exception as e:
             print(f"Scheduled sync failed: {e}")
-
-
 scheduler = AsyncIOScheduler()
-
-
 @app.on_event("startup")
 async def start_scheduler():
     scheduler.add_job(
         run_sync_job, "interval", hours=4, id="doc_sync", replace_existing=True
     )
     scheduler.start()
-
-
 # --- Routes ---
 
 # Auth routes (public — no auth required)

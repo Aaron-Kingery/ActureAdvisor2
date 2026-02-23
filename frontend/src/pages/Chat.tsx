@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, ThumbsUp, ThumbsDown, FileText, Lightbulb } from 'lucide-react'
+import { Send, ThumbsUp, ThumbsDown, FileText, Lightbulb, PlusCircle } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { api, type ChatResponse } from '../api/client'
 
@@ -16,6 +16,7 @@ export default function Chat() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [docCount, setDocCount] = useState(0)
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -26,6 +27,12 @@ export default function Chat() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
+  const handleNewChat = () => {
+    setMessages([])
+    setSessionId(undefined)
+    setInput('')
+  }
+
   const handleSend = async () => {
     const msg = input.trim()
     if (!msg || loading) return
@@ -34,7 +41,11 @@ export default function Chat() {
     setLoading(true)
 
     try {
-      const data: ChatResponse = await api.chat(msg)
+      const data: ChatResponse = await api.chat(msg, sessionId)
+      // Store session ID from first response for conversation continuity
+      if (!sessionId) {
+        setSessionId(data.session_id)
+      }
       setMessages((prev) => [
         ...prev,
         {
@@ -178,6 +189,15 @@ export default function Chat() {
       {/* Input area */}
       <div className="border-t border-gray-200 bg-white px-4 py-3">
         <div className="max-w-3xl mx-auto flex gap-2">
+          {messages.length > 0 && (
+            <button
+              onClick={handleNewChat}
+              title="New conversation"
+              className="rounded-full border border-gray-300 text-gray-500 p-2.5 hover:bg-gray-50 transition-colors"
+            >
+              <PlusCircle className="w-4 h-4" />
+            </button>
+          )}
           <input
             type="text"
             value={input}

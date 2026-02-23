@@ -109,7 +109,9 @@ class SharePointConnector(DocumentConnector):
             "application/msword": "doc",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
             "application/vnd.ms-excel": "xls",
-            "text/plain": "txt"
+            "text/plain": "txt",
+            "text/markdown": "md",
+            "application/octet-stream": "txt"
         }
         return mime_map.get(mime_type, "unknown")
 

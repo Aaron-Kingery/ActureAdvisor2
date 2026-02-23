@@ -18,6 +18,7 @@ export interface ChatResponse {
   response: string
   sources: { title: string; url: string }[]
   query_id: string
+  session_id: string
 }
 
 export interface Stats {
@@ -49,10 +50,10 @@ export interface DocumentItem {
 }
 
 export const api = {
-  chat: (message: string) =>
+  chat: (message: string, sessionId?: string) =>
     request<ChatResponse>('/chat/', {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, session_id: sessionId }),
     }),
 
   feedback: (queryId: string, feedbackType: string) =>

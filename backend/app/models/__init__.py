@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from sqlalchemy import String, Boolean, DateTime, ForeignKey, Text, Enum, Integer, ARRAY
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID, JSONB, TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from pgvector.sqlalchemy import Vector
 
@@ -47,7 +47,7 @@ class Document(Base):
     content_hash: Mapped[str] = mapped_column(String(64))
     last_synced: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    
+
     chunks: Mapped[List["DocumentChunk"]] = relationship(back_populates="document", cascade="all, delete-orphan")
 
 class DocumentChunk(Base):
@@ -57,10 +57,13 @@ class DocumentChunk(Base):
     document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"))
     chunk_index: Mapped[int] = mapped_column(Integer)
     content: Mapped[str] = mapped_column(Text)
-    embedding: Mapped[Optional[List[float]]] = mapped_column(Vector(1536))
+    embedding: Mapped[Optional[List[float]]] = mapped_column(Vector(2000))
+    search_vector = mapped_column(TSVECTOR, nullable=True)
+    parent_chunk_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("document_chunks.id", ondelete="CASCADE"), nullable=True)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default={})
-    
+
     document: Mapped["Document"] = relationship(back_populates="chunks")
+    parent_chunk: Mapped[Optional["DocumentChunk"]] = relationship(remote_side="DocumentChunk.id", foreign_keys=[parent_chunk_id])
 
 class Query(Base):
     __tablename__ = "queries"
@@ -73,7 +76,7 @@ class Query(Base):
     answered: Mapped[bool] = mapped_column(Boolean, default=False)
     source_doc_ids: Mapped[Optional[List[uuid.UUID]]] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    
+
     feedback: Mapped[Optional["Feedback"]] = relationship(back_populates="query")
     user: Mapped["User"] = relationship()
 

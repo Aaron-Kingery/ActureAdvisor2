@@ -13,6 +13,7 @@ router = APIRouter()
 
 class ChatRequest(BaseModel):
     message: str
+    session_id: Optional[str] = None
 
 
 class Source(BaseModel):
@@ -24,6 +25,7 @@ class ChatResponse(BaseModel):
     response: str
     sources: List[Source]
     query_id: uuid.UUID
+    session_id: str
 
 
 @router.post("/", response_model=ChatResponse)
@@ -32,12 +34,15 @@ async def chat(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """Chat endpoint — requires auth (enforced at router level)."""
+    """Chat endpoint -- requires auth (enforced at router level)."""
     user = request.session.get("user", {})
     user_email = user.get("email", "unknown")
 
-    # 1. Search
-    chunks = await rag_service.search(request_body.message, db, limit=10)
+    # Generate or use provided session ID for conversation continuity
+    session_id = request_body.session_id or str(uuid.uuid4())
+
+    # 1. Search (limit=5 to keep context focused and reduce noise)
+    chunks = await rag_service.search(request_body.message, db, limit=5)
 
     # 2. Generate
     if not chunks:
@@ -46,7 +51,7 @@ async def chat(
         source_ids = []
     else:
         response_text = await rag_service.generate_response(
-            request_body.message, chunks
+            request_body.message, chunks, session_id=session_id
         )
         sources = []
         seen_urls = set()
@@ -62,6 +67,12 @@ async def chat(
 
     is_negative = "I don't have information about that" in response_text
     answered_status = False if is_negative else bool(chunks)
+
+    # Store exchange in conversation memory even for no-result queries
+    if not chunks and session_id:
+        rag_service.conversation_store.add_exchange(
+            session_id, request_body.message, response_text
+        )
 
     # 3. Store Query
     new_query = Query(
@@ -91,6 +102,7 @@ async def chat(
         response=response_text,
         sources=sources,
         query_id=new_query.id,
+        session_id=session_id,
     )
 
 
