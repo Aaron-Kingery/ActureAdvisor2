@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.api.api_v1.endpoints import health, chat, sync, admin
 from app.auth.routes import router as auth_router
 from app.auth.dependencies import require_auth
+from app.analytics_middleware import AnalyticsMiddleware
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -43,6 +44,9 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["*"],
 )
+
+# Usage analytics (fire-and-forget)
+app.add_middleware(AnalyticsMiddleware, app_name='advisor')
 
 # --- Scheduled sync ---
 
